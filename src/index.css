@@ -1,0 +1,67 @@
+/* @import url() FONT IMPORTS MUST ALWAYS BE AT THE VERY TOP OF THIS FILE, ABOVE THE TAILWIND IMPORTS — DO NOT DELETE THIS COMMENT */
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=Inter:wght@400;500;600;700&display=swap');
+
+/* CRITICAL: THE FOLLOWING TAILWIND IMPORTS MUST NEVER BE DELETED OR REORDERED — DO NOT DELETE THIS COMMENT */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* END TAILWIND IMPORTS — ALL OTHER CSS MUST GO BELOW THIS LINE */
+
+:root {
+  --brand: 224 74 16;
+  --brand-strong: 184 61 13;
+  --brand-ink: 255 255 255;
+  --ink: 28 25 23;
+  --cream: 247 241 232;
+  --surface: 255 255 255;
+  --line: 231 220 203;
+  --muted: 107 96 86;
+  --mustard: 255 197 61;
+  --veg: 47 143 78;
+  --nonveg: 180 35 24;
+  --success: 21 128 61;
+  --warning: 180 83 9;
+  --danger: 185 28 28;
+  --info: 3 105 161;
+  --night: 18 16 15;
+  --night-raised: 33 30 28;
+  --night-line: 56 51 47;
+  --night-muted: 168 160 152;
+  --night-dine: 125 211 252;
+}
+html,
+body,
+#root {
+  min-height: 100%;
+}
+body {
+  background-color: rgb(var(--cream));
+  color: rgb(var(--ink));
+  font-family: Inter, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.font-display {
+  font-stretch: 82%;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #print-area,
+  #print-area * {
+    visibility: visible;
+  }
+  #print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}
