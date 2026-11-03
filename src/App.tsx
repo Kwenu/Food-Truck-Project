@@ -4,6 +4,7 @@ import { MotionConfig } from 'framer-motion';
 import { Toaster } from 'sonner';
 import { StoreProvider } from './contexts/StoreContext';
 import { CartProvider } from './contexts/CartContext';
+import { CurrencyProvider } from './contexts/CurrencyContext';
 import { StaffAuthProvider } from './contexts/StaffAuthContext';
 import { RequireStaff } from './components/shared/RequireStaff';
 import { StaffLogin } from './pages/staff/StaffLogin';
@@ -43,6 +44,7 @@ export function App({ brandPalette = 'flame' }: AppProps) {
         <StaffAuthProvider>
           <StoreProvider>
             <StoreGate>
+            <CurrencyProvider>
             <CartProvider>
             <ThemeSync palette={brandPalette} />
             <Toaster position="top-center" richColors closeButton />
@@ -86,6 +88,7 @@ export function App({ brandPalette = 'flame' }: AppProps) {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </CartProvider>
+            </CurrencyProvider>
             </StoreGate>
           </StoreProvider>
         </StaffAuthProvider>

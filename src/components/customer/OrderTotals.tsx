@@ -1,6 +1,6 @@
 import React from 'react';
 import type { OrderTotals as Totals } from '../../types/order';
-import { formatMoney } from '../../utils/currency';
+import { useMoney } from '../../contexts/CurrencyContext';
 
 interface OrderTotalsProps {
   totals: Totals;
@@ -9,6 +9,7 @@ interface OrderTotalsProps {
 }
 
 export function OrderTotals({ totals, promoCode, taxRate }: OrderTotalsProps) {
+  const { formatMoney, currency, rate } = useMoney();
   return (
     <dl className="space-y-2 text-sm">
       <div className="flex justify-between">
@@ -35,6 +36,11 @@ export function OrderTotals({ totals, promoCode, taxRate }: OrderTotalsProps) {
         <dt className="font-bold">Total</dt>
         <dd className="font-display text-2xl font-black tabular-nums">{formatMoney(totals.total)}</dd>
       </div>
+      {currency === 'LKR' &&
+      <p className="pt-1 text-xs text-muted">
+          Shown in Sri Lankan rupees at Rs. {rate.toLocaleString('en-US')} = $1. The menu price is ${totals.total.toFixed(2)} USD.
+        </p>
+      }
     </dl>);
 
 }

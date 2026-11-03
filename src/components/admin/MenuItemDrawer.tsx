@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import type { MenuItem, MenuTag } from '../../types/menu';
 import { useStore } from '../../contexts/StoreContext';
 import { createId } from '../../utils/id';
+import { formatIn } from '../../utils/currency';
 import { Sheet } from '../shared/Sheet';
 import { Switch } from '../shared/Switch';
 
@@ -15,25 +16,31 @@ interface MenuItemDrawerProps {
 
 const inputClass = 'mt-1.5 h-11 w-full rounded-xl border border-line bg-surface px-3.5 text-sm outline-none transition-colors duration-150 focus:border-brand';
 const labelClass = 'text-sm font-semibold';
+/** Select value meaning "create a new category" */
+const NEW_CATEGORY = '__new__';
 
 export function MenuItemDrawer({ item, open, onClose }: MenuItemDrawerProps) {
-  const { categories, upsertMenuItem, deleteMenuItem } = useStore();
+  const { categories, settings, upsertMenuItem, deleteMenuItem, addCategory } = useStore();
   const fileRef = useRef<HTMLInputElement>(null);
   const [draft, setDraft] = useState<MenuItem | null>(null);
   const [priceText, setPriceText] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
   const isNew = !item;
+  // Read inside the effect without re-running it: a background refresh must not wipe what is being typed
+  const categoriesRef = useRef(categories);
+  categoriesRef.current = categories;
 
   useEffect(() => {
     if (!open) return;
-    const sorted = [...categories].sort((a, b) => a.sortOrder - b.sortOrder);
+    const sorted = [...categoriesRef.current].sort((a, b) => a.sortOrder - b.sortOrder);
     const base: MenuItem = item ?? {
       id: createId('item'),
       name: '',
       description: '',
       price: 0,
-      categoryId: sorted.find((c) => c.id !== 'offers')?.id ?? sorted[0]?.id ?? '',
+      categoryId: sorted.find((c) => c.id !== 'offers')?.id ?? sorted[0]?.id ?? NEW_CATEGORY,
       image: '',
       veg: true,
       tags: [],
@@ -46,9 +53,19 @@ export function MenuItemDrawer({ item, open, onClose }: MenuItemDrawerProps) {
     setPriceText(base.price ? String(base.price) : '');
     setErrors({});
     setConfirmDelete(false);
-  }, [open, item, categories]);
+    setNewCategoryName('');
+  }, [open, item]);
 
   if (!draft) return null;
+
+  const sortedCategories = [...categories].sort((a, b) => a.sortOrder - b.sortOrder);
+  // If the chosen category no longer exists (or none existed yet), fall back instead of silently failing
+  const categoryValue =
+  draft.categoryId === NEW_CATEGORY || sortedCategories.some((c) => c.id === draft.categoryId) ?
+  draft.categoryId :
+  sortedCategories.find((c) => c.id !== 'offers')?.id ?? sortedCategories[0]?.id ?? NEW_CATEGORY;
+  const creatingCategory = categoryValue === NEW_CATEGORY;
+  const priceNumber = parseFloat(priceText);
 
   const set = <K extends keyof MenuItem,>(key: K, value: MenuItem[K]) => setDraft((d) => d ? { ...d, [key]: value } : d);
   const toggleTag = (tag: MenuTag) => set('tags', draft.tags.includes(tag) ? draft.tags.filter((t) => t !== tag) : [...draft.tags, tag]);
@@ -74,11 +91,16 @@ export function MenuItemDrawer({ item, open, onClose }: MenuItemDrawerProps) {
     if (draft.name.trim().length < 2) e.name = 'Name is required.';
     if (!Number.isFinite(price) || price <= 0) e.price = 'Enter a price above 0.';
     if (!draft.image) e.image = 'Add a photo so customers can see the dish.';
-    if (!draft.categoryId) e.category = 'Choose a category.';
+    if (creatingCategory && newCategoryName.trim().length < 2) e.category = 'Type a name for the new category.';
     setErrors(e);
-    if (Object.keys(e).length) return;
+    if (Object.keys(e).length) {
+      toast.error(Object.values(e)[0]);
+      return;
+    }
+    const categoryId = creatingCategory ? addCategory(newCategoryName.trim()).id : categoryValue;
     upsertMenuItem({
       ...draft,
+      categoryId,
       name: draft.name.trim(),
       description: draft.description.trim(),
       price: Math.round(price * 100) / 100,
@@ -187,7 +209,7 @@ export function MenuItemDrawer({ item, open, onClose }: MenuItemDrawerProps) {
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           <div>
             <label htmlFor="item-price" className={labelClass}>
-              Price ($)
+              Price (USD)
             </label>
             <input
               id="item-price"
@@ -197,6 +219,9 @@ export function MenuItemDrawer({ item, open, onClose }: MenuItemDrawerProps) {
               className={`${inputClass} ${errors.price ? 'border-danger' : ''}`} />
             
             {errors.price && <p className="mt-1 text-xs font-medium text-danger">{errors.price}</p>}
+            {Number.isFinite(priceNumber) && priceNumber > 0 &&
+            <p className="mt-1 text-xs text-muted">≈ {formatIn(priceNumber, 'LKR', settings.lkrPerUsd)}</p>
+            }
           </div>
           <div>
             <label htmlFor="item-prep" className={labelClass}>
@@ -216,15 +241,23 @@ export function MenuItemDrawer({ item, open, onClose }: MenuItemDrawerProps) {
             <label htmlFor="item-cat" className={labelClass}>
               Category
             </label>
-            <select id="item-cat" value={draft.categoryId} onChange={(e) => set('categoryId', e.target.value)} className={inputClass}>
-              {[...categories].
-              sort((a, b) => a.sortOrder - b.sortOrder).
-              map((c) =>
+            <select id="item-cat" value={categoryValue} onChange={(e) => set('categoryId', e.target.value)} className={`${inputClass} ${errors.category ? 'border-danger' : ''}`}>
+              {sortedCategories.map((c) =>
               <option key={c.id} value={c.id}>
                     {c.name}
                   </option>
               )}
+              <option value={NEW_CATEGORY}>+ New category…</option>
             </select>
+            {creatingCategory &&
+            <input
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              placeholder={sortedCategories.length === 0 ? 'Create your first category, e.g. Burgers' : 'New category name'}
+              aria-label="New category name"
+              className={`${inputClass} ${errors.category ? 'border-danger' : ''}`} />
+            }
+            {errors.category && <p className="mt-1 text-xs font-medium text-danger">{errors.category}</p>}
           </div>
         </div>
 

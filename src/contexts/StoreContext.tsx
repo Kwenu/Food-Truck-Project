@@ -59,7 +59,7 @@ export interface StoreContextValue extends StoreState {
   upsertMenuItem: (item: MenuItem) => void;
   patchMenuItem: (id: string, patch: Partial<MenuItem>) => void;
   deleteMenuItem: (id: string) => void;
-  addCategory: (name: string) => void;
+  addCategory: (name: string) => Category;
   renameCategory: (id: string, name: string) => void;
   deleteCategory: (id: string) => void;
   moveCategory: (id: string, direction: -1 | 1) => void;
@@ -334,7 +334,7 @@ export function StoreProvider({ children }: {children: React.ReactNode;}) {
     save(() => db.deleteMenuItemRemote(id), 'Could not delete the item.');
   }, [save]);
 
-  const addCategory = useCallback((name: string) => {
+  const addCategory = useCallback((name: string): Category => {
     const cat: Category = {
       id: createId('cat'),
       name,
@@ -342,6 +342,7 @@ export function StoreProvider({ children }: {children: React.ReactNode;}) {
     };
     setState((s) => ({ ...s, categories: [...s.categories, cat] }));
     save(() => db.upsertCategoriesRemote([cat]), 'Could not add the category.');
+    return cat;
   }, [save]);
 
   const renameCategory = useCallback((id: string, name: string) => {

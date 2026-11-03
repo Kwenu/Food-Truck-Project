@@ -213,6 +213,16 @@ export function Settings() {
             onCommit={(v) => updateSettings({ packagingFee: v })} />
           
           <NumberField
+            id="lkr-rate"
+            label="Exchange rate (LKR per $1)"
+            hint="Prices are saved in US dollars. Customers who choose LKR see them converted at this rate."
+            value={settings.lkrPerUsd}
+            suffix="Rs."
+            min={1}
+            max={100000}
+            onCommit={(v) => updateSettings({ lkrPerUsd: v })} />
+          
+          <NumberField
             id="service"
             label="Service charge"
             hint="Added to dine-in orders."

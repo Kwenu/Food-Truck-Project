@@ -6,7 +6,7 @@ import { Loader2Icon } from 'lucide-react';
 import { useStore } from '../../contexts/StoreContext';
 import { useTrackedOrder } from '../../hooks/useTrackedOrder';
 import { useNow } from '../../hooks/useNow';
-import { formatMoney } from '../../utils/currency';
+import { useMoney } from '../../contexts/CurrencyContext';
 import { paymentMethodLabel } from '../../utils/orderStatus';
 import { formatClock, minutesUntil } from '../../utils/time';
 import { CustomerHeader } from '../../components/customer/CustomerHeader';
@@ -17,6 +17,7 @@ import { PaymentBadge } from '../../components/shared/StatusBadge';
 import { VegMark } from '../../components/shared/VegMark';
 
 export function OrderStatus() {
+  const { formatMoney } = useMoney();
   const { number = '' } = useParams();
   const location = useLocation();
   const justPlaced = (location.state as {justPlaced?: boolean;} | null)?.justPlaced ?? false;

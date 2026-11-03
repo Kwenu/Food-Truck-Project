@@ -4,9 +4,10 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowRightIcon } from 'lucide-react';
 import { useCart } from '../../contexts/CartContext';
 import { useCartTotals } from '../../hooks/useCartTotals';
-import { formatMoney } from '../../utils/currency';
+import { useMoney } from '../../contexts/CurrencyContext';
 
 export function FloatingCartBar() {
+  const { formatMoney } = useMoney();
   const { itemCount } = useCart();
   const { totals } = useCartTotals();
 

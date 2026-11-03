@@ -4,6 +4,7 @@ import { ArrowLeftIcon, ClockIcon, ShoppingBagIcon, UtensilsIcon } from 'lucide-
 import { useCart } from '../../contexts/CartContext';
 import { useCartTotals } from '../../hooks/useCartTotals';
 import { Logo } from '../shared/Logo';
+import { CurrencyToggle } from '../shared/CurrencyToggle';
 
 interface CustomerHeaderProps {
   backTo?: string;
@@ -37,6 +38,7 @@ export function CustomerHeader({ backTo, showCart = true, showMode = true }: Cus
         </Link>
 
         <div className="ml-auto flex items-center gap-2">
+          <CurrencyToggle compact />
           {showMode && orderType &&
           <Link
             to={orderType === 'dine-in' ? '/dine-in' : '/'}

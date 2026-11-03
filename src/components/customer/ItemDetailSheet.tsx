@@ -3,7 +3,7 @@ import { CheckIcon, ClockIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import type { MenuItem } from '../../types/menu';
 import { useCart } from '../../contexts/CartContext';
-import { formatMoney } from '../../utils/currency';
+import { useMoney } from '../../contexts/CurrencyContext';
 import { Sheet } from '../shared/Sheet';
 import { QuantityStepper } from '../shared/QuantityStepper';
 import { VegMark } from '../shared/VegMark';
@@ -16,6 +16,7 @@ interface ItemDetailSheetProps {
 }
 
 export function ItemDetailSheet({ item, open, disabled, onClose }: ItemDetailSheetProps) {
+  const { formatMoney } = useMoney();
   const { addLine } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [addOnIds, setAddOnIds] = useState<string[]>([]);

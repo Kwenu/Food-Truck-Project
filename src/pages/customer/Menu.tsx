@@ -79,7 +79,7 @@ export function Menu() {
           <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 text-sm md:px-6" role="status">
             <StoreIcon size={18} className="shrink-0 text-mustard" />
             <span>
-              <strong className="font-semibold">We’re closed right now.</strong> Browse the menu — ordering opens again soon.
+              <strong className="font-semibold">We’re closed right now.</strong> Browse the menu - ordering opens again soon.
             </span>
           </div>
         </div>
@@ -90,7 +90,7 @@ export function Menu() {
           <div>
             <h1 className="font-display text-4xl font-black uppercase leading-none tracking-tight md:text-5xl">Menu</h1>
             <p className="mt-1.5 text-sm text-muted">
-              {cart.orderType === 'dine-in' ? `Ordering for Table ${cart.tableNumber}. We’ll bring it over.` : 'Takeaway — we’ll call your name when it’s ready.'}
+              {cart.orderType === 'dine-in' ? `Ordering for Table ${cart.tableNumber}. We’ll bring it over.` : 'Takeaway - we’ll call your name when it’s ready.'}
             </p>
           </div>
           <div className="flex items-center gap-3">

@@ -29,5 +29,5 @@ export const promotions: Promotion[] = [
   type: 'percent',
   value: 15,
   minSubtotal: 0,
-  active: false
+  active: true
 }];

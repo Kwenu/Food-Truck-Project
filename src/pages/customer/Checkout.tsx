@@ -5,7 +5,7 @@ import type { PaymentMethod } from '../../types/order';
 import { useCart } from '../../contexts/CartContext';
 import { useStore } from '../../contexts/StoreContext';
 import { useCartTotals } from '../../hooks/useCartTotals';
-import { formatMoney } from '../../utils/currency';
+import { useMoney } from '../../contexts/CurrencyContext';
 import { pickupSlots } from '../../utils/time';
 import { CustomerHeader } from '../../components/customer/CustomerHeader';
 import { OrderTotals } from '../../components/customer/OrderTotals';
@@ -14,6 +14,7 @@ import { PaymentMethodPicker } from '../../components/customer/PaymentMethodPick
 import { VegMark } from '../../components/shared/VegMark';
 
 export function Checkout() {
+  const { formatMoney } = useMoney();
   const navigate = useNavigate();
   const cart = useCart();
   const { settings, placeOrder } = useStore();

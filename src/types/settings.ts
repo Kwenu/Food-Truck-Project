@@ -14,4 +14,6 @@ export interface Settings {
   scheduledPickup: boolean;
   basePrepMinutes: number;
   chimeEnabled: boolean;
+  /** Rupees per 1 US dollar. Used to show LKR prices to customers who prefer rupees. */
+  lkrPerUsd: number;
 }

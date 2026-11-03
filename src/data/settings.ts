@@ -9,7 +9,8 @@ export const defaultSettings: Settings = {
   serviceChargeRate: 5,
   scheduledPickup: true,
   basePrepMinutes: 12,
-  chimeEnabled: true
+  chimeEnabled: true,
+  lkrPerUsd: 300
 };
 
 export const customerNames = [

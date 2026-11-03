@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { AlertCircleIcon, Loader2Icon, LockIcon } from 'lucide-react';
-import { formatMoney } from '../../utils/currency';
+import { useMoney } from '../../contexts/CurrencyContext';
 import { processPayment, type PaymentResult } from '../../utils/paymentGateway';
 import { Sheet } from '../shared/Sheet';
 
@@ -21,6 +21,7 @@ const wallets = [
 type Stage = 'choose' | 'processing' | 'failed';
 
 export function PaymentSheet({ open, amount, onClose, onSuccess }: PaymentSheetProps) {
+  const { formatMoney } = useMoney();
   const [wallet, setWallet] = useState('upi');
   const [simulateFailure, setSimulateFailure] = useState(false);
   const [stage, setStage] = useState<Stage>('choose');

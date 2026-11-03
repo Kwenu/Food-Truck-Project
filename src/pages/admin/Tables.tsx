@@ -7,6 +7,7 @@ import { formatMoney } from '../../utils/currency';
 import { isActiveStatus } from '../../utils/orderStatus';
 import { AdminPageHeader } from '../../components/admin/AdminPageHeader';
 import { TableQrModal } from '../../components/admin/TableQrModal';
+import { AllQrPdfButton } from '../../components/admin/AllQrPdfButton';
 import { CounterQrModal } from '../../components/admin/CounterQrModal';
 import { OrderDetailPanel } from '../../components/admin/OrderDetailPanel';
 import { StatusBadge } from '../../components/shared/StatusBadge';
@@ -70,11 +71,14 @@ export function Tables() {
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-surface p-5 ring-1 ring-line">
         <div>
           <p className="font-semibold">Cashier / counter QR</p>
-          <p className="text-sm text-muted">One code for the counter. Customers choose dine-in or takeaway after scanning.</p>
+          <p className="text-sm text-muted">One code for the counter. Customers choose dine-in or takeaway after scanning. The PDF includes the counter and every table.</p>
         </div>
-        <button type="button" onClick={() => setCounterOpen(true)} className="inline-flex h-11 items-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white">
-          <QrCodeIcon size={18} /> View counter QR
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <AllQrPdfButton />
+          <button type="button" onClick={() => setCounterOpen(true)} className="inline-flex h-11 items-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white">
+            <QrCodeIcon size={18} /> View counter QR
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-6">

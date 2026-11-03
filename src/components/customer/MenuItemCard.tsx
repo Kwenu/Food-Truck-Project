@@ -1,7 +1,7 @@
 import React from 'react';
 import { PlusIcon } from 'lucide-react';
 import type { MenuItem } from '../../types/menu';
-import { formatMoney } from '../../utils/currency';
+import { useMoney } from '../../contexts/CurrencyContext';
 import { VegMark } from '../shared/VegMark';
 
 interface MenuItemCardProps {
@@ -13,6 +13,7 @@ interface MenuItemCardProps {
 }
 
 export function MenuItemCard({ item, quantityInCart, disabled, onOpen, onQuickAdd }: MenuItemCardProps) {
+  const { formatMoney } = useMoney();
   const unavailable = item.soldOut;
   return (
     <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-surface ring-1 ring-line">

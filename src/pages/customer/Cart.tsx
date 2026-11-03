@@ -4,13 +4,14 @@ import { ClockIcon, PlusIcon, ShoppingBagIcon, TagIcon, XIcon } from 'lucide-rea
 import { useCart } from '../../contexts/CartContext';
 import { useStore } from '../../contexts/StoreContext';
 import { useCartTotals } from '../../hooks/useCartTotals';
-import { formatMoney } from '../../utils/currency';
+import { useMoney } from '../../contexts/CurrencyContext';
 import { CustomerHeader } from '../../components/customer/CustomerHeader';
 import { CartLineItem } from '../../components/customer/CartLineItem';
 import { OrderTotals } from '../../components/customer/OrderTotals';
 import { EmptyState } from '../../components/shared/EmptyState';
 
 export function Cart() {
+  const { formatMoney } = useMoney();
   const navigate = useNavigate();
   const { lines, note, setNote, promoCode, setPromoCode, orderType, tableNumber } = useCart();
   const { promotions, settings } = useStore();

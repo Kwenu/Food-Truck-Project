@@ -6,6 +6,7 @@ import { useStore } from '../../contexts/StoreContext';
 import { brandImages } from '../../data/brand';
 import { estimatePrepMinutes } from '../../utils/prepTime';
 import { Logo } from '../../components/shared/Logo';
+import { CurrencyToggle } from '../../components/shared/CurrencyToggle';
 import { OrderTypeTile } from '../../components/customer/OrderTypeTile';
 
 export function Welcome() {
@@ -54,6 +55,7 @@ export function Welcome() {
               <span className="text-muted">· Browse the menu, ordering is paused</span>
             </>
           }
+          <CurrencyToggle className="ml-auto" />
         </div>
 
         <div className="mt-8 lg:my-auto">

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { MessageSquareIcon, XIcon } from 'lucide-react';
 import type { OrderLine } from '../../types/order';
 import { useCart } from '../../contexts/CartContext';
-import { formatMoney } from '../../utils/currency';
+import { useMoney } from '../../contexts/CurrencyContext';
 import { QuantityStepper } from '../shared/QuantityStepper';
 import { VegMark } from '../shared/VegMark';
 
@@ -12,6 +12,7 @@ interface CartLineItemProps {
 }
 
 export function CartLineItem({ line, compact = false }: CartLineItemProps) {
+  const { formatMoney } = useMoney();
   const { updateQuantity, removeLine, setLineNote } = useCart();
   const [editingNote, setEditingNote] = useState(false);
 
