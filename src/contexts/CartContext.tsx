@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import type { MenuItem } from '../types/menu';
 import type { OrderLine, OrderType } from '../types/order';
 import { createId } from '../utils/id';
+import { claimTableRemote, releaseTableRemote } from '../lib/db';
 
 /** The current customer's in-progress order on this device. */
 const STORAGE_KEY = 'ember-wheel:cart:v1';
@@ -13,11 +14,19 @@ interface CartState {
   note: string;
   promoCode: string | null;
   myOrders: string[];
+  /** Anonymous id of this device, used to hold a table so nobody else can take it. */
+  tableToken: string;
 }
 
 interface CartContextValue extends CartState {
   itemCount: number;
   startOrder: (type: OrderType, tableNumber?: number | null) => void;
+  /** Reserves the table for this device on the server and starts a dine-in order. Throws if the table is occupied. */
+  claimTable: (tableNumber: number) => Promise<void>;
+  /** Keeps the current table reserved (called while the customer is still browsing). Throws if it was lost. */
+  renewTable: () => Promise<void>;
+  /** Lets go of the table (switching to takeaway / order finished) */
+  leaveTable: () => void;
   addLine: (item: MenuItem, quantity: number, addOnIds: string[], note: string) => void;
   updateQuantity: (lineId: string, quantity: number) => void;
   removeLine: (lineId: string) => void;
@@ -28,7 +37,17 @@ interface CartContextValue extends CartState {
   rememberOrder: (orderNumber: string) => void;
 }
 
-const emptyCart: CartState = { orderType: null, tableNumber: null, lines: [], note: '', promoCode: null, myOrders: [] };
+/** Random, hard-to-guess id for this device (stored only in this browser). */
+function newDeviceToken(): string {
+  try {
+    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
+  } catch {
+    // fall through
+  }
+  return `${createId('dev')}${createId('tok')}${createId('key')}`;
+}
+
+const emptyCart: CartState = { orderType: null, tableNumber: null, lines: [], note: '', promoCode: null, myOrders: [], tableToken: '' };
 
 const CartContext = createContext<CartContextValue | null>(null);
 
@@ -42,7 +61,10 @@ function loadCart(): CartState {
 }
 
 export function CartProvider({ children }: {children: React.ReactNode;}) {
-  const [cart, setCart] = useState<CartState>(loadCart);
+  const [cart, setCart] = useState<CartState>(() => {
+    const loaded = loadCart();
+    return loaded.tableToken ? loaded : { ...loaded, tableToken: newDeviceToken() };
+  });
 
   useEffect(() => {
     try {
@@ -55,6 +77,21 @@ export function CartProvider({ children }: {children: React.ReactNode;}) {
   const startOrder = useCallback((type: OrderType, tableNumber: number | null = null) => {
     setCart((c) => ({ ...c, orderType: type, tableNumber: type === 'dine-in' ? tableNumber : null }));
   }, []);
+
+  const claimTable = useCallback(async (tableNumber: number) => {
+    await claimTableRemote(tableNumber, cart.tableToken);
+    setCart((c) => ({ ...c, orderType: 'dine-in', tableNumber }));
+  }, [cart.tableToken]);
+
+  const renewTable = useCallback(async () => {
+    if (cart.orderType !== 'dine-in' || !cart.tableNumber) return;
+    await claimTableRemote(cart.tableNumber, cart.tableToken);
+  }, [cart.orderType, cart.tableNumber, cart.tableToken]);
+
+  const leaveTable = useCallback(() => {
+    releaseTableRemote(cart.tableToken).catch(() => undefined);
+    setCart((c) => ({ ...c, orderType: c.orderType === 'dine-in' ? null : c.orderType, tableNumber: null }));
+  }, [cart.tableToken]);
 
   const addLine = useCallback((item: MenuItem, quantity: number, addOnIds: string[], note: string) => {
     const chosen = item.addOns.filter((a) => addOnIds.includes(a.id));
@@ -110,6 +147,9 @@ export function CartProvider({ children }: {children: React.ReactNode;}) {
       ...cart,
       itemCount: cart.lines.reduce((s, l) => s + l.quantity, 0),
       startOrder,
+      claimTable,
+      renewTable,
+      leaveTable,
       addLine,
       updateQuantity,
       removeLine,
@@ -119,7 +159,7 @@ export function CartProvider({ children }: {children: React.ReactNode;}) {
       clearCart,
       rememberOrder
     }),
-    [cart, startOrder, addLine, updateQuantity, removeLine, setLineNote, setNote, setPromoCode, clearCart, rememberOrder]
+    [cart, startOrder, claimTable, renewTable, leaveTable, addLine, updateQuantity, removeLine, setLineNote, setNote, setPromoCode, clearCart, rememberOrder]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

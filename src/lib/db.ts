@@ -139,6 +139,8 @@ export interface PlaceOrderInput {
   promoCode: string | null;
   /** How the customer says they'll pay at the cashier. Payment is always recorded as unpaid until staff mark it paid. */
   payment: {method: PaymentMethod;};
+  /** Anonymous per-device token that proves which device holds the table (dine-in only). */
+  tableToken?: string | null;
 }
 
 /**
@@ -149,6 +151,7 @@ export async function placeOrderRemote(input: PlaceOrderInput): Promise<Order> {
   const payload = {
     type: input.type,
     tableNumber: input.tableNumber,
+    tableToken: input.tableToken ?? null,
     customer: input.customer,
     pickup: input.pickup,
     lines: input.lines.map((l) => ({
@@ -165,6 +168,33 @@ export async function placeOrderRemote(input: PlaceOrderInput): Promise<Order> {
   const { data, error } = await supabase.rpc('place_order', { payload });
   ensure(error);
   return orderFromRow(data as unknown as OrderRow);
+}
+
+/* ============================== Table locking ============================== */
+
+export interface TableState {
+  number: number;
+  /** true = someone else is sitting there (or has just scanned it), so this device can't take it */
+  busy: boolean;
+  /** true = this device already holds the table */
+  mine: boolean;
+}
+
+/** Reserves a table for this device (about 10 minutes, renewed while the customer is browsing). Throws if it is taken. */
+export async function claimTableRemote(tableNumber: number, token: string): Promise<void> {
+  ensure((await supabase.rpc('claim_table', { p_number: tableNumber, p_token: token })).error);
+}
+
+/** Lets go of whatever table this device is holding. */
+export async function releaseTableRemote(token: string): Promise<void> {
+  ensure((await supabase.rpc('release_table', { p_token: token })).error);
+}
+
+/** Live availability of every table, from this device's point of view. */
+export async function fetchTableStates(token: string): Promise<TableState[]> {
+  const { data, error } = await supabase.rpc('get_table_states', { p_token: token });
+  ensure(error);
+  return Array.isArray(data) ? (data as TableState[]) : [];
 }
 
 /* ============================== Staff writes ============================== */

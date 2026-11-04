@@ -78,7 +78,7 @@ export function PaymentSheet({ open, amount, onClose, onSuccess }: PaymentSheetP
             <button
             type="button"
             onClick={pay}
-            className="mt-5 flex h-14 w-full items-center justify-center gap-2 rounded-full bg-brand font-semibold text-brand-ink transition-colors duration-150 hover:bg-brand-strong">
+            className="mt-5 flex h-14 w-full items-center justify-center gap-2 rounded-full gradient-brand font-semibold text-white transition-colors duration-150 hover:brightness-110">
             
               <LockIcon size={18} /> Pay {formatMoney(amount)}
             </button>
@@ -107,7 +107,7 @@ export function PaymentSheet({ open, amount, onClose, onSuccess }: PaymentSheetP
               <button
               type="button"
               onClick={() => setStage('choose')}
-              className="h-12 rounded-full bg-brand font-semibold text-brand-ink transition-colors duration-150 hover:bg-brand-strong">
+              className="h-12 rounded-full gradient-brand font-semibold text-white transition-colors duration-150 hover:brightness-110">
               
                 Try again
               </button>

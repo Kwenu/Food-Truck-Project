@@ -27,7 +27,7 @@ export function PaymentMethodPicker({ method, onMethodChange }: PaymentMethodPic
               }>
               
               <input type="radio" name="payment" value={value} checked={selected} onChange={() => onMethodChange(value)} className="sr-only" />
-              <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${selected ? 'bg-brand text-brand-ink' : 'bg-cream'}`}>
+              <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${selected ? 'gradient-brand text-white' : 'bg-cream'}`}>
                 <Icon size={20} />
               </span>
               <span>

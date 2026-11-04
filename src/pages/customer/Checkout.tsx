@@ -5,6 +5,7 @@ import type { PaymentMethod } from '../../types/order';
 import { useCart } from '../../contexts/CartContext';
 import { useStore } from '../../contexts/StoreContext';
 import { useCartTotals } from '../../hooks/useCartTotals';
+import { useTableHold } from '../../hooks/useTableHold';
 import { useMoney } from '../../contexts/CurrencyContext';
 import { pickupSlots } from '../../utils/time';
 import { CustomerHeader } from '../../components/customer/CustomerHeader';
@@ -20,6 +21,7 @@ export function Checkout() {
   const { settings, placeOrder } = useStore();
   const { totals, promoApplied, prepMinutes } = useCartTotals();
   const isDineIn = cart.orderType === 'dine-in';
+  useTableHold();
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -57,6 +59,7 @@ export function Checkout() {
       const order = await placeOrder({
         type: cart.orderType ?? 'takeaway',
         tableNumber: isDineIn ? cart.tableNumber : null,
+        tableToken: isDineIn ? cart.tableToken : null,
         customer: { name: name.trim(), phone: phone.replace(/\D/g, '') },
         pickup: isDineIn ? null : useScheduled ? { mode: 'scheduled', at: slot } : { mode: 'asap', at: null },
         lines: cart.lines,
@@ -95,19 +98,19 @@ export function Checkout() {
   const sectionTitle = 'font-display text-2xl font-extrabold uppercase tracking-tight';
 
   return (
-    <div className="min-h-screen w-full bg-cream pb-12">
+    <div className="customer-bg min-h-screen w-full pb-12">
       <CustomerHeader backTo="/cart" showCart={false} />
-      <main className="mx-auto max-w-6xl px-4 py-8 md:px-6">
-        <h1 className="font-display text-4xl font-black uppercase leading-none tracking-tight md:text-5xl">Checkout</h1>
+      <main className="mx-auto max-w-[1500px] px-4 py-8 md:px-8 xl:px-12">
+        <h1 className="text-gradient w-fit font-display text-5xl font-black uppercase leading-none tracking-tight md:text-6xl">Checkout</h1>
 
         <form onSubmit={submit} noValidate className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start lg:gap-8">
           <div className="space-y-6">
-            <section className="rounded-3xl bg-surface p-5 ring-1 ring-line md:p-6">
+            <section className="rounded-3xl bg-surface p-5 shadow-lg shadow-ink/5 ring-1 ring-line/60 md:p-6">
               <h2 className={sectionTitle}>{isDineIn ? 'Your table' : 'Pickup'}</h2>
               <div className="mt-4">
                 {isDineIn ?
                 <div className="flex items-center gap-4 rounded-2xl bg-cream p-4">
-                    <span className="grid h-14 w-14 place-items-center rounded-2xl bg-ink font-display text-2xl font-black text-white">{cart.tableNumber}</span>
+                    <span className="grid h-14 w-14 place-items-center rounded-2xl gradient-cool font-display text-2xl font-black text-white shadow-lg shadow-ink/10">{cart.tableNumber}</span>
                     <div className="flex-1">
                       <p className="font-semibold">Table {cart.tableNumber}</p>
                       <p className="text-sm text-muted">We’ll serve your food here in ~{prepMinutes} min.</p>
@@ -131,7 +134,7 @@ export function Checkout() {
               </div>
             </section>
 
-            <section className="rounded-3xl bg-surface p-5 ring-1 ring-line md:p-6">
+            <section className="rounded-3xl bg-surface p-5 shadow-lg shadow-ink/5 ring-1 ring-line/60 md:p-6">
               <h2 className={sectionTitle}>Your details</h2>
               <p className="mt-1 text-sm text-muted">{isDineIn ? 'Optional — your name helps us find your order.' : 'So we can call your name when your order is ready.'}</p>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -140,7 +143,7 @@ export function Checkout() {
               </div>
             </section>
 
-            <section className="rounded-3xl bg-surface p-5 ring-1 ring-line md:p-6">
+            <section className="rounded-3xl bg-surface p-5 shadow-lg shadow-ink/5 ring-1 ring-line/60 md:p-6">
               <h2 className={sectionTitle}>Payment · at the cashier</h2>
               <div className="mt-4">
                 <PaymentMethodPicker method={method} onMethodChange={setMethod} />
@@ -149,7 +152,7 @@ export function Checkout() {
           </div>
 
           <aside className="lg:sticky lg:top-24">
-            <section className="rounded-3xl bg-surface p-5 ring-1 ring-line md:p-6">
+            <section className="rounded-3xl bg-surface p-5 shadow-lg shadow-ink/5 ring-1 ring-line/60 md:p-6">
               <div className="flex items-center justify-between">
                 <h2 className="font-display text-xl font-extrabold uppercase tracking-tight">Order summary</h2>
                 <Link to="/cart" className="text-sm font-semibold text-brand-strong hover:underline">
@@ -194,7 +197,7 @@ export function Checkout() {
               <button
                 type="submit"
                 disabled={submitting || !settings.isOpen}
-                className="mt-5 flex h-14 w-full items-center justify-center gap-2 rounded-full bg-brand font-semibold text-brand-ink transition-colors duration-150 hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-60">
+                className="mt-5 flex h-14 w-full items-center justify-center gap-2 rounded-full gradient-brand font-semibold text-white transition-colors duration-150 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60">
                 
                 {submitting ?
                 <>

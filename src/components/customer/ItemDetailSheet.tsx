@@ -56,7 +56,7 @@ export function ItemDetailSheet({ item, open, disabled, onClose }: ItemDetailShe
           type="button"
           onClick={handleAdd}
           disabled={cannotAdd}
-          className="flex h-14 flex-1 items-center justify-between gap-3 rounded-full bg-brand px-6 font-semibold text-brand-ink transition-colors duration-150 hover:bg-brand-strong disabled:cursor-not-allowed disabled:bg-line disabled:text-muted">
+          className="flex h-14 flex-1 items-center justify-between gap-3 rounded-full gradient-brand px-6 font-semibold text-white transition-colors duration-150 hover:brightness-110 disabled:cursor-not-allowed disabled:bg-line disabled:text-muted">
           
             <span className="whitespace-nowrap">{item.soldOut ? 'Sold out' : disabled ? 'Truck closed' : 'Add to order'}</span>
             {!cannotAdd && <span className="font-display text-lg font-extrabold">{formatMoney(unitPrice * quantity)}</span>}
@@ -93,7 +93,7 @@ export function ItemDetailSheet({ item, open, disabled, onClose }: ItemDetailShe
                     <input type="checkbox" className="sr-only" checked={checked} onChange={() => toggleAddOn(a.id)} />
                     <span
                     className={`grid h-5 w-5 place-items-center rounded-md border-2 transition-colors duration-150 ${
-                    checked ? 'border-brand bg-brand text-brand-ink' : 'border-line'}`
+                    checked ? 'border-brand gradient-brand text-white' : 'border-line'}`
                     }
                     aria-hidden="true">
                     

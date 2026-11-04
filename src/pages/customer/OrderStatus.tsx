@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CheckIcon, SearchXIcon, StoreIcon, XCircleIcon } from 'lucide-react';
 import { Loader2Icon } from 'lucide-react';
 import { useStore } from '../../contexts/StoreContext';
+import { useCart } from '../../contexts/CartContext';
 import { useTrackedOrder } from '../../hooks/useTrackedOrder';
 import { useNow } from '../../hooks/useNow';
 import { useMoney } from '../../contexts/CurrencyContext';
@@ -24,10 +25,18 @@ export function OrderStatus() {
   const { settings } = useStore();
   const now = useNow(1000);
   const { order, loading, error } = useTrackedOrder(number);
+  const { tableNumber, leaveTable } = useCart();
+
+  // When the admin completes (or rejects) a dine-in order, this device lets go of the table.
+  const finishedTable = order && order.type === 'dine-in' && (order.status === 'completed' || order.status === 'rejected') ? order.tableNumber : null;
+  useEffect(() => {
+    if (finishedTable && finishedTable === tableNumber) leaveTable();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finishedTable]);
 
   if (loading && !order) {
     return (
-      <div className="min-h-screen w-full bg-cream">
+      <div className="customer-bg min-h-screen w-full">
         <CustomerHeader showCart={false} showMode={false} />
         <main className="mx-auto max-w-xl px-4 py-16">
           <p role="status" className="flex items-center justify-center gap-3 text-muted">
@@ -40,7 +49,7 @@ export function OrderStatus() {
 
   if (!order) {
     return (
-      <div className="min-h-screen w-full bg-cream">
+      <div className="customer-bg min-h-screen w-full">
         <CustomerHeader showCart={false} showMode={false} />
         <main className="mx-auto max-w-xl px-4 py-12">
           <EmptyState
@@ -48,7 +57,7 @@ export function OrderStatus() {
             title="Order not found"
             body={error ? `We couldn't load order ${number} right now. Check your connection and try again.` : `We couldn't find order ${number}. Check the number on your receipt.`}
             action={
-            <Link to="/track" className="inline-flex h-12 items-center rounded-full bg-brand px-6 font-semibold text-brand-ink">
+            <Link to="/track" className="inline-flex h-12 items-center rounded-full gradient-brand px-6 font-semibold text-white">
                 Try another number
               </Link>
             } />
@@ -85,9 +94,9 @@ export function OrderStatus() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-cream pb-12">
+    <div className="customer-bg min-h-screen w-full pb-12">
       <CustomerHeader showCart={false} showMode={false} />
-      <main className="mx-auto max-w-5xl px-4 py-8 md:px-6">
+      <main className="mx-auto max-w-[1300px] px-4 py-8 md:px-8 xl:px-12">
         {justPlaced &&
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -105,7 +114,7 @@ export function OrderStatus() {
           </motion.div>
         }
 
-        <section className={`rounded-3xl p-6 md:p-8 ${order.status === 'rejected' ? 'bg-danger text-white' : 'bg-ink text-white'}`}>
+        <section className={`rounded-3xl p-6 md:p-8 ${order.status === 'rejected' ? 'bg-danger text-white' : 'gradient-night text-white shadow-2xl shadow-ink/10'}`}>
           <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-sm font-medium text-white/70">Order number</p>
@@ -138,7 +147,7 @@ export function OrderStatus() {
         }
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
-          <section className="rounded-3xl bg-surface p-6 ring-1 ring-line md:p-8">
+          <section className="rounded-3xl bg-surface p-6 shadow-lg shadow-ink/5 ring-1 ring-line/60 md:p-8">
             <div className="flex items-center justify-between">
               <h2 className="font-display text-xl font-extrabold uppercase tracking-tight">Live status</h2>
               {order.status !== 'rejected' && order.status !== 'completed' &&
@@ -160,7 +169,7 @@ export function OrderStatus() {
             </div>
           </section>
 
-          <aside className="rounded-3xl bg-surface p-6 ring-1 ring-line">
+          <aside className="rounded-3xl bg-surface p-6 shadow-lg shadow-ink/5 ring-1 ring-line/60">
             <h2 className="font-display text-xl font-extrabold uppercase tracking-tight">Details</h2>
             <dl className="mt-4 space-y-2 text-sm">
               <div className="flex justify-between gap-4">
@@ -198,7 +207,7 @@ export function OrderStatus() {
         </div>
 
         <div className="mt-8 flex flex-wrap gap-3">
-          <Link to="/menu" className="inline-flex h-12 items-center rounded-full bg-brand px-6 font-semibold text-brand-ink transition-colors duration-150 hover:bg-brand-strong">
+          <Link to="/menu" className="inline-flex h-12 items-center rounded-full gradient-brand px-6 font-semibold text-white transition-colors duration-150 hover:brightness-110">
             Order something else
           </Link>
           <Link to="/track" className="inline-flex h-12 items-center rounded-full px-6 font-semibold ring-1 ring-line transition-colors duration-150 hover:bg-surface">

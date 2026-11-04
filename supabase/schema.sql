@@ -99,6 +99,19 @@ create table if not exists public.orders (
 create index if not exists orders_status_idx  on public.orders (status);
 create index if not exists orders_created_idx on public.orders (created_at desc);
 
+-- Table locking: which device (anonymous token) placed a dine-in order, so only that device
+-- may keep ordering at the table while the order is still active.
+alter table public.orders add column if not exists table_token text;
+
+-- Short "holds": scanning a table QR reserves that table for ~10 minutes for the scanning device.
+-- No policies on purpose: customers can never read or write this directly (tokens stay private).
+create table if not exists public.table_holds (
+  table_number int primary key,
+  held_by      text not null,
+  held_until   timestamptz not null
+);
+create index if not exists table_holds_token_idx on public.table_holds (held_by);
+
 -- Staff accounts. Each row links to a Supabase Auth user (email + password).
 create table if not exists public.staff_profiles (
   user_id     uuid primary key references auth.users (id) on delete cascade,
@@ -130,7 +143,7 @@ returns jsonb
 language sql
 stable
 as $$
-  select to_jsonb(o) || jsonb_build_object(
+  select (to_jsonb(o) - 'table_token') || jsonb_build_object(
     'customer_phone', '',
     'customer_name', split_part(btrim(o.customer_name), ' ', 1)
   )
@@ -150,6 +163,7 @@ begin
      or new.number is distinct from old.number
      or new.type is distinct from old.type
      or new.table_number is distinct from old.table_number
+     or new.table_token is distinct from old.table_token
      or new.customer_name is distinct from old.customer_name
      or new.customer_phone is distinct from old.customer_phone
      or new.lines is distinct from old.lines
@@ -192,6 +206,59 @@ create trigger orders_before_update
   before update on public.orders
   for each row execute function public.orders_before_update();
 
+-- When the admin completes (or rejects) a dine-in order, the table becomes free again
+-- (unless the same table still has another active order).
+create or replace function public.orders_after_update()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.type = 'dine-in'
+     and new.table_number is not null
+     and new.status in ('completed', 'rejected')
+     and old.status not in ('completed', 'rejected') then
+    if not exists (
+      select 1 from public.orders o
+      where o.type = 'dine-in'
+        and o.table_number = new.table_number
+        and o.id <> new.id
+        and o.status in ('received', 'confirmed', 'preparing', 'ready')
+    ) then
+      update public.dining_tables set status = 'available' where number = new.table_number;
+      delete from public.table_holds where table_number = new.table_number;
+    end if;
+  end if;
+  return null;
+end;
+$$;
+
+drop trigger if exists orders_after_update on public.orders;
+create trigger orders_after_update
+  after update on public.orders
+  for each row execute function public.orders_after_update();
+
+-- Staff marking a table "available" also clears any pending hold on it.
+create or replace function public.tables_after_update()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.status = 'available' and old.status is distinct from 'available' then
+    delete from public.table_holds where table_number = new.number;
+  end if;
+  return null;
+end;
+$$;
+
+drop trigger if exists tables_after_update on public.dining_tables;
+create trigger tables_after_update
+  after update on public.dining_tables
+  for each row execute function public.tables_after_update();
+
 -- Never allow the restaurant to end up with no active admin.
 create or replace function public.keep_one_admin()
 returns trigger
@@ -216,6 +283,125 @@ create trigger staff_keep_one_admin
 --  4. Customer-facing functions (callable without signing in)
 -- ---------------------------------------------------------------------------
 
+-- Is this table unavailable to the device identified by p_token?
+--   1. another device has an active dine-in order on it      -> busy
+--   2. this device has an active order on it                  -> free (it may keep ordering)
+--   3. another device holds it (scanned recently)             -> busy
+--   4. this device holds it                                   -> free
+--   5. staff marked it occupied with no order/hold behind it  -> busy
+create or replace function public.table_busy(p_number int, p_token text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_token  text := nullif(btrim(coalesce(p_token, '')), '');
+  v_status text;
+  h        public.table_holds;
+begin
+  select status into v_status from public.dining_tables where number = p_number;
+  if not found then
+    return false;
+  end if;
+
+  if exists (
+    select 1 from public.orders o
+    where o.type = 'dine-in' and o.table_number = p_number
+      and o.status in ('received', 'confirmed', 'preparing', 'ready')
+      and (v_token is null or o.table_token is null or o.table_token <> v_token)
+  ) then
+    return true;
+  end if;
+
+  if exists (
+    select 1 from public.orders o
+    where o.type = 'dine-in' and o.table_number = p_number
+      and o.status in ('received', 'confirmed', 'preparing', 'ready')
+  ) then
+    return false;
+  end if;
+
+  select * into h from public.table_holds where table_number = p_number and held_until > now();
+  if found then
+    return v_token is null or h.held_by <> v_token;
+  end if;
+
+  return v_status = 'occupied';
+end;
+$$;
+
+-- Scanning a table QR / choosing a table: reserve it for this device (10 minutes, renewed while the
+-- customer is still on the menu). Fails if somebody else is sitting there. One table per device.
+create or replace function public.claim_table(p_number int, p_token text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_token text := nullif(btrim(coalesce(p_token, '')), '');
+  v_until timestamptz := now() + interval '10 minutes';
+begin
+  if v_token is null or char_length(v_token) < 8 then
+    raise exception 'Could not start your table session. Please refresh the page.';
+  end if;
+
+  perform 1 from public.dining_tables where number = p_number for update;
+  if not found then
+    raise exception 'That table does not exist. Please check the number on your table.';
+  end if;
+
+  delete from public.table_holds where held_until <= now();
+
+  if public.table_busy(p_number, v_token) then
+    raise exception 'Table % is already occupied. Please choose another table or ask our staff for help.', p_number;
+  end if;
+
+  delete from public.table_holds where held_by = v_token and table_number <> p_number;
+  insert into public.table_holds (table_number, held_by, held_until)
+  values (p_number, v_token, v_until)
+  on conflict (table_number) do update set held_by = excluded.held_by, held_until = excluded.held_until;
+
+  return jsonb_build_object('ok', true, 'table', p_number, 'heldUntil', v_until);
+end;
+$$;
+
+-- The customer leaves the table (changes table, switches to takeaway, or their order is finished).
+create or replace function public.release_table(p_token text)
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  delete from public.table_holds where held_by = nullif(btrim(coalesce(p_token, '')), '')
+$$;
+
+-- Live table availability for the customer's table picker. `busy` is true when the table
+-- cannot be taken by this device; `mine` is true when this device already holds it.
+create or replace function public.get_table_states(p_token text)
+returns jsonb
+language sql
+volatile
+security definer
+set search_path = public
+as $$
+  select coalesce(jsonb_agg(jsonb_build_object(
+    'number', t.number,
+    'busy',   public.table_busy(t.number, p_token),
+    'mine',   (not public.table_busy(t.number, p_token)) and (
+                exists (select 1 from public.table_holds h
+                        where h.table_number = t.number and h.held_until > now()
+                          and h.held_by = nullif(btrim(coalesce(p_token, '')), ''))
+                or exists (select 1 from public.orders o
+                        where o.type = 'dine-in' and o.table_number = t.number
+                          and o.status in ('received', 'confirmed', 'preparing', 'ready')
+                          and o.table_token = nullif(btrim(coalesce(p_token, '')), ''))
+              )
+  ) order by t.number), '[]'::jsonb)
+  from public.dining_tables t
+$$;
+
 -- Places an order. Prices, totals, prep time and the order number are all
 -- calculated HERE from the database — the browser only says what was ordered.
 create or replace function public.place_order(payload jsonb)
@@ -228,6 +414,7 @@ declare
   s              jsonb;
   v_type         text := payload ->> 'type';
   v_table_number int;
+  v_token        text := nullif(left(btrim(coalesce(payload ->> 'tableToken', '')), 80), '');
   v_name         text := left(btrim(coalesce(payload #>> '{customer,name}', '')), 60);
   v_phone        text := left(regexp_replace(coalesce(payload #>> '{customer,phone}', ''), '\D', '', 'g'), 15);
   v_note         text := left(btrim(coalesce(payload ->> 'note', '')), 300);
@@ -282,9 +469,16 @@ begin
 
   if v_type = 'dine-in' then
     v_table_number := (payload ->> 'tableNumber')::int;
-    perform 1 from public.dining_tables where number = v_table_number;
+    -- Lock the table row so two customers can never take the same table at the same moment.
+    perform 1 from public.dining_tables where number = v_table_number for update;
     if not found then
       raise exception 'That table does not exist. Please check the number on your table.';
+    end if;
+    if v_token is null or char_length(v_token) < 8 then
+      raise exception 'Please scan your table QR code again to start ordering.';
+    end if;
+    if public.table_busy(v_table_number, v_token) then
+      raise exception 'Table % is already occupied by another customer. Please choose a different table or ask our staff for help.', v_table_number;
     end if;
   else
     if char_length(v_name) < 2 then
@@ -398,7 +592,7 @@ begin
     number, type, table_number, customer_name, customer_phone,
     pickup_mode, pickup_at, lines, note, promo_code, totals,
     payment_method, payment_status, payment_reference,
-    status, history, prep_minutes, estimated_ready_at
+    status, history, prep_minutes, estimated_ready_at, table_token
   ) values (
     'EW-' || nextval('public.order_number_seq')::text, v_type, v_table_number, v_name, v_phone,
     v_pickup_mode, v_pickup_at, v_lines, v_note, v_code,
@@ -408,11 +602,12 @@ begin
     ),
     v_method, v_pay_status, v_reference,
     'received', jsonb_build_array(jsonb_build_object('status', 'received', 'at', now())),
-    v_prep, v_ready
+    v_prep, v_ready, case when v_type = 'dine-in' then v_token else null end
   ) returning * into new_order;
 
   if v_type = 'dine-in' then
     update public.dining_tables set status = 'occupied' where number = v_table_number;
+    delete from public.table_holds where table_number = v_table_number;  -- the order itself now owns the table
   end if;
 
   return public.order_public_json(new_order);
@@ -464,10 +659,17 @@ revoke all on function public.place_order(jsonb)   from public;
 revoke all on function public.get_orders(text[])   from public;
 revoke all on function public.queue_count()        from public;
 revoke all on function public.set_truck_open(boolean) from public;
+revoke all on function public.table_busy(int, text)     from public;
+revoke all on function public.claim_table(int, text)    from public;
+revoke all on function public.release_table(text)       from public;
+revoke all on function public.get_table_states(text)    from public;
 grant execute on function public.place_order(jsonb)   to anon, authenticated;
 grant execute on function public.get_orders(text[])   to anon, authenticated;
 grant execute on function public.queue_count()        to anon, authenticated;
 grant execute on function public.set_truck_open(boolean) to authenticated;
+grant execute on function public.claim_table(int, text)    to anon, authenticated;
+grant execute on function public.release_table(text)       to anon, authenticated;
+grant execute on function public.get_table_states(text)    to anon, authenticated;
 
 -- ---------------------------------------------------------------------------
 --  5. Row Level Security  (this is what actually keeps customers out)
@@ -479,6 +681,8 @@ alter table public.promotions      enable row level security;
 alter table public.dining_tables   enable row level security;
 alter table public.orders          enable row level security;
 alter table public.staff_profiles  enable row level security;
+alter table public.table_holds     enable row level security;   -- no policies = nobody can touch it directly
+revoke all on public.table_holds from anon, authenticated;
 
 revoke all on public.orders, public.staff_profiles from anon;
 
@@ -555,6 +759,20 @@ begin
     end;
   end loop;
 end $$;
+
+-- ---------------------------------------------------------------------------
+--  6b. One-time cleanup for tables that were left "occupied" by older orders.
+--      Frees every table that has no active dine-in order. (Harmless to re-run, but it
+--      will also clear a table staff marked "occupied" by hand — mark it again if needed.)
+-- ---------------------------------------------------------------------------
+update public.dining_tables t
+   set status = 'available'
+ where status = 'occupied'
+   and not exists (
+     select 1 from public.orders o
+     where o.type = 'dine-in' and o.table_number = t.number
+       and o.status in ('received', 'confirmed', 'preparing', 'ready')
+   );
 
 -- ---------------------------------------------------------------------------
 --  7. Create your first admin

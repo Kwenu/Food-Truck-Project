@@ -48,7 +48,7 @@ export function TrackOrder() {
   }, [myOrders]);
 
   return (
-    <div className="min-h-screen w-full bg-cream">
+    <div className="customer-bg min-h-screen w-full">
       <CustomerHeader backTo="/" showCart={false} showMode={false} />
       <main className="mx-auto max-w-xl px-4 py-10 md:py-16">
         <h1 className="font-display text-4xl font-black uppercase leading-none tracking-tight md:text-5xl">Track your order</h1>
@@ -71,7 +71,7 @@ export function TrackOrder() {
               error ? 'border-danger' : 'border-line'}`
               } />
             
-            <button type="submit" disabled={!value.trim() || searching} className="flex h-14 items-center gap-2 rounded-full bg-brand px-6 font-semibold text-brand-ink disabled:opacity-50">
+            <button type="submit" disabled={!value.trim() || searching} className="flex h-14 items-center gap-2 rounded-full gradient-brand px-6 font-semibold text-white disabled:opacity-50">
               <SearchIcon size={18} /> Track
             </button>
           </div>
@@ -85,7 +85,7 @@ export function TrackOrder() {
         {recent.length > 0 &&
         <section className="mt-10">
             <h2 className="text-sm font-bold text-muted">Your recent orders on this device</h2>
-            <ul className="mt-3 divide-y divide-line rounded-3xl bg-surface ring-1 ring-line">
+            <ul className="mt-3 divide-y divide-line rounded-3xl bg-surface shadow-lg shadow-ink/5 ring-1 ring-line/60">
               {recent.map((o) =>
             <li key={o.id}>
                   <Link to={`/order/${o.number}`} className="flex h-16 items-center gap-3 px-5 transition-colors duration-150 hover:bg-cream/60">

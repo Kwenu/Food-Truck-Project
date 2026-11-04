@@ -17,7 +17,7 @@ export function CategoryChips({ categories, active, onSelect }: CategoryChipsPro
 
   return (
     <nav aria-label="Menu categories">
-      <div ref={containerRef} className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
+      <div ref={containerRef} className="no-scrollbar flex gap-2 overflow-x-auto">
         {categories.map((c) => {
           const isActive = active === `cat-${c.id}`;
           return (
@@ -27,7 +27,7 @@ export function CategoryChips({ categories, active, onSelect }: CategoryChipsPro
               data-cat={`cat-${c.id}`}
               onClick={() => onSelect(c.id)}
               aria-current={isActive ? 'true' : undefined}
-              className={`h-10 shrink-0 whitespace-nowrap rounded-full px-4 text-sm font-semibold transition-colors duration-150 ${
+              className={`h-11 shrink-0 whitespace-nowrap rounded-full px-5 text-sm font-semibold transition-colors duration-150 ${
               isActive ? 'bg-ink text-white' : 'bg-surface text-ink ring-1 ring-line hover:ring-ink/30'}`
               }>
               

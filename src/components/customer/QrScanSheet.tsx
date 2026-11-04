@@ -24,7 +24,7 @@ export function QrScanSheet({ open, onClose, onScan }: QrScanSheetProps) {
           )}
           <motion.span
             aria-hidden="true"
-            className="absolute inset-x-8 h-0.5 bg-brand"
+            className="absolute inset-x-8 h-0.5 gradient-brand"
             initial={{ top: '18%' }}
             animate={{ top: ['18%', '82%', '18%'] }}
             transition={{ duration: 2.4, repeat: Infinity, ease: 'linear' }} />
@@ -40,7 +40,7 @@ export function QrScanSheet({ open, onClose, onScan }: QrScanSheetProps) {
             key={t.id}
             type="button"
             onClick={() => onScan(t.number)}
-            className="h-12 rounded-xl bg-cream text-sm font-bold ring-1 ring-line transition-colors duration-150 hover:bg-brand hover:text-brand-ink hover:ring-brand">
+            className="h-12 rounded-xl bg-cream text-sm font-bold ring-1 ring-line transition-colors duration-150 hover:bg-brand hover:text-white hover:ring-brand">
             
               T{t.number}
             </button>

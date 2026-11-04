@@ -17,8 +17,8 @@ export function CustomerHeader({ backTo, showCart = true, showMode = true }: Cus
   const { prepMinutes } = useCartTotals();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-cream/95 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-2 px-4 md:gap-3 md:px-6">
+    <header className="glass sticky top-0 z-30 border-b border-white/70 shadow-sm shadow-ink/5">
+      <div className="mx-auto flex h-16 max-w-[1680px] items-center gap-2 px-4 md:gap-3 md:px-8 xl:px-12">
         {backTo &&
         <Link
           to={backTo}
@@ -43,16 +43,16 @@ export function CustomerHeader({ backTo, showCart = true, showMode = true }: Cus
           <Link
             to={orderType === 'dine-in' ? '/dine-in' : '/'}
             aria-label="Change how you're ordering"
-            className="inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-full border border-line bg-surface px-3.5 text-sm font-semibold transition-colors duration-150 hover:border-ink/30">
+            className="inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-full bg-brand/10 px-3.5 text-sm font-semibold text-brand-strong ring-1 ring-brand/20 transition-colors duration-150 hover:bg-brand/15">
             
               {orderType === 'dine-in' ?
             <>
-                  <UtensilsIcon size={16} className="text-brand-strong" />
+                  <UtensilsIcon size={16} />
                   Table {tableNumber}
                 </> :
 
             <>
-                  <ClockIcon size={16} className="text-brand-strong" />
+                  <ClockIcon size={16} />
                   <span className="hidden sm:inline">Takeaway ·</span> ~{prepMinutes} min
                 </>
             }
@@ -62,12 +62,12 @@ export function CustomerHeader({ backTo, showCart = true, showMode = true }: Cus
           <Link
             to="/cart"
             aria-label={`Cart, ${itemCount} items`}
-            className="relative inline-flex h-10 items-center gap-2 rounded-full bg-ink px-4 text-sm font-semibold text-white transition-colors duration-150 hover:bg-ink/90">
+            className="relative inline-flex h-10 items-center gap-2 rounded-full gradient-night px-4 text-sm font-semibold text-white shadow-md shadow-ink/10 transition-[transform,box-shadow] duration-150 hover:shadow-lg active:scale-95">
             
               <ShoppingBagIcon size={17} />
               <span className="hidden sm:inline">Cart</span>
               {itemCount > 0 &&
-            <span className="grid h-5 min-w-[20px] place-items-center rounded-full bg-brand px-1.5 text-xs font-bold text-brand-ink">{itemCount}</span>
+            <span className="grid h-5 min-w-[20px] place-items-center rounded-full gradient-sun px-1.5 text-xs font-bold text-ink">{itemCount}</span>
             }
             </Link>
           }

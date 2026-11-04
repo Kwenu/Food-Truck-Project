@@ -23,9 +23,9 @@ export function FloatingCartBar() {
         
           <Link
           to="/cart"
-          className="mx-auto flex h-16 max-w-xl items-center gap-3 rounded-full bg-ink pl-3 pr-5 text-white shadow-2xl shadow-ink/30">
+          className="mx-auto flex h-16 max-w-xl items-center gap-3 rounded-full gradient-night pl-3 pr-5 text-white shadow-2xl shadow-ink/10 ring-1 ring-white/10">
           
-            <span className="grid h-10 min-w-[40px] place-items-center rounded-full bg-brand px-2 font-display text-lg font-black text-brand-ink">
+            <span className="grid h-10 min-w-[40px] place-items-center rounded-full gradient-sun px-2 font-display text-lg font-black text-ink">
               {itemCount}
             </span>
             <span className="flex-1 font-semibold">View cart</span>

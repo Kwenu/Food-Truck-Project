@@ -23,7 +23,7 @@ export function PickupTimePicker({ mode, onModeChange, slot, onSlotChange, slots
         }>
         
         <input type="radio" name="pickup-mode" value={value} checked={selected} onChange={() => onModeChange(value)} className="sr-only" />
-        <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${selected ? 'bg-brand text-brand-ink' : 'bg-cream text-ink'}`}>
+        <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${selected ? 'gradient-brand text-white' : 'bg-cream text-ink'}`}>
           <Icon size={20} />
         </span>
         <span>

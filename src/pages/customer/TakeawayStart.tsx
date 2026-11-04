@@ -12,5 +12,5 @@ export function TakeawayStart() {
     navigate('/menu', { replace: true });
   }, [startOrder, navigate]);
 
-  return <div className="min-h-screen w-full bg-cream" />;
+  return <div className="customer-bg min-h-screen w-full" />;
 }

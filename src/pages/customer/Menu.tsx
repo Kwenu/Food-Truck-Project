@@ -6,9 +6,9 @@ import type { MenuItem } from '../../types/menu';
 import { useCart } from '../../contexts/CartContext';
 import { useStore } from '../../contexts/StoreContext';
 import { useScrollSpy } from '../../hooks/useScrollSpy';
+import { useTableHold } from '../../hooks/useTableHold';
 import { CustomerHeader } from '../../components/customer/CustomerHeader';
 import { CategoryChips } from '../../components/customer/CategoryChips';
-import { CategoryRail } from '../../components/customer/CategoryRail';
 import { MenuItemCard } from '../../components/customer/MenuItemCard';
 import { ItemDetailSheet } from '../../components/customer/ItemDetailSheet';
 import { CartPanel } from '../../components/customer/CartPanel';
@@ -19,6 +19,7 @@ import { Switch } from '../../components/shared/Switch';
 export function Menu() {
   const { categories, menuItems, settings, promotions } = useStore();
   const cart = useCart();
+  useTableHold();
   const [query, setQuery] = useState('');
   const [vegOnly, setVegOnly] = useState(false);
   const [selected, setSelected] = useState<MenuItem | null>(null);
@@ -50,7 +51,7 @@ export function Menu() {
   const scrollTo = (id: string) => {
     const el = document.getElementById(`cat-${id}`);
     if (!el) return;
-    const y = el.getBoundingClientRect().top + window.scrollY - 136;
+    const y = el.getBoundingClientRect().top + window.scrollY - 150;
     window.scrollTo({ top: y, behavior: 'smooth' });
   };
 
@@ -71,12 +72,12 @@ export function Menu() {
   const navCategories = sections.map((s) => ({ id: s.category.id, name: s.category.name, count: s.items.length }));
 
   return (
-    <div className="min-h-screen w-full bg-cream pb-28 lg:pb-12">
+    <div className="customer-bg min-h-screen w-full pb-28 lg:pb-12">
       <CustomerHeader />
 
       {!settings.isOpen &&
       <div className="bg-ink text-white">
-          <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 text-sm md:px-6" role="status">
+          <div className="mx-auto flex max-w-[1680px] items-center gap-3 px-4 py-3 text-sm md:px-8 xl:px-12" role="status">
             <StoreIcon size={18} className="shrink-0 text-mustard" />
             <span>
               <strong className="font-semibold">We’re closed right now.</strong> Browse the menu - ordering opens again soon.
@@ -85,16 +86,16 @@ export function Menu() {
         </div>
       }
 
-      <div className="mx-auto max-w-7xl px-4 md:px-6">
-        <div className="flex flex-col gap-4 pb-4 pt-6 md:flex-row md:items-end md:justify-between">
+      <div className="mx-auto max-w-[1680px] px-4 md:px-8 xl:px-12">
+        <div className="flex flex-col gap-4 pb-4 pt-5 md:flex-row md:items-end md:justify-between">
           <div>
             <h1 className="font-display text-4xl font-black uppercase leading-none tracking-tight md:text-5xl">Menu</h1>
-            <p className="mt-1.5 text-sm text-muted">
+            <p className="mt-2 text-sm font-medium text-muted md:text-base">
               {cart.orderType === 'dine-in' ? `Ordering for Table ${cart.tableNumber}. We’ll bring it over.` : 'Takeaway - we’ll call your name when it’s ready.'}
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="relative flex-1 md:w-72 md:flex-none">
+            <div className="relative flex-1 md:w-80 md:flex-none xl:w-96">
               <SearchIcon size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
               <input
                 type="search"
@@ -122,34 +123,23 @@ export function Menu() {
         </div>
 
         {activePromos.length > 0 && !query &&
-        <div className="no-scrollbar -mx-4 mb-2 flex gap-3 overflow-x-auto px-4 pb-2">
+        <div className="no-scrollbar -mx-4 mb-3 flex gap-2 overflow-x-auto px-4 pb-1">
             {activePromos.map((p) =>
-          <div key={p.id} className="flex min-w-[260px] shrink-0 items-center gap-3 rounded-2xl bg-ink px-4 py-3 text-white">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-mustard text-ink">
-                  <TagIcon size={18} />
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold">{p.title}</p>
-                  <p className="text-xs text-white/70">
-                    Use code <span className="font-mono font-bold text-mustard">{p.code}</span> at checkout
-                  </p>
-                </div>
-              </div>
+          <p key={p.id} className="inline-flex shrink-0 items-center gap-2 rounded-full bg-brand/10 px-4 py-2 text-sm text-ink">
+                <TagIcon size={15} className="text-brand-strong" />
+                <span className="font-semibold">{p.title}</span>
+                <span className="text-muted">· code</span>
+                <span className="font-mono font-bold text-brand-strong">{p.code}</span>
+              </p>
           )}
           </div>
         }
 
-        <div className="sticky top-16 z-20 -mx-4 bg-cream/95 px-4 py-3 backdrop-blur lg:hidden">
+        <div className="glass sticky top-16 z-20 -mx-4 border-b border-line/60 px-4 py-3 md:-mx-8 md:px-8 xl:-mx-12 xl:px-12">
           <CategoryChips categories={navCategories} active={active} onSelect={scrollTo} />
         </div>
 
-        <div className="lg:grid lg:grid-cols-[180px_minmax(0,1fr)_340px] lg:gap-8 lg:pt-4">
-          <aside className="hidden lg:block">
-            <div className="sticky top-24">
-              <CategoryRail categories={navCategories} active={active} onSelect={scrollTo} />
-            </div>
-          </aside>
-
+        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8 lg:pt-6 xl:gap-10">
           <div>
             {sections.length === 0 ?
             <EmptyState
@@ -170,12 +160,15 @@ export function Menu() {
               } /> :
 
 
-            sections.map(({ category, items }) =>
-            <section key={category.id} id={`cat-${category.id}`} aria-labelledby={`h-${category.id}`} className="pb-10 pt-2">
-                  <h2 id={`h-${category.id}`} className="font-display text-2xl font-extrabold uppercase tracking-tight md:text-3xl">
-                    {category.name}
-                  </h2>
-                  <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-2 xl:grid-cols-3">
+            sections.map(({ category, items }, index) =>
+            <section key={category.id} id={`cat-${category.id}`} aria-labelledby={`h-${category.id}`} className="pb-10 pt-6">
+                  <div className="flex items-baseline gap-3">
+                    <h2 id={`h-${category.id}`} className="font-display text-3xl font-extrabold uppercase tracking-tight md:text-4xl">
+                      {category.name}
+                    </h2>
+                    <span className="text-sm font-semibold text-muted">{items.length} items</span>
+                  </div>
+                  <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-[repeat(auto-fill,minmax(300px,1fr))] xl:gap-6">
                     {items.map((item) =>
                 <MenuItemCard
                   key={item.id}
@@ -193,7 +186,7 @@ export function Menu() {
           </div>
 
           <aside className="hidden lg:block">
-            <div className="sticky top-24">
+            <div className="sticky top-40">
               <CartPanel />
             </div>
           </aside>

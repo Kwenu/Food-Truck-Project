@@ -4,6 +4,7 @@ import { ClockIcon, PlusIcon, ShoppingBagIcon, TagIcon, XIcon } from 'lucide-rea
 import { useCart } from '../../contexts/CartContext';
 import { useStore } from '../../contexts/StoreContext';
 import { useCartTotals } from '../../hooks/useCartTotals';
+import { useTableHold } from '../../hooks/useTableHold';
 import { useMoney } from '../../contexts/CurrencyContext';
 import { CustomerHeader } from '../../components/customer/CustomerHeader';
 import { CartLineItem } from '../../components/customer/CartLineItem';
@@ -14,6 +15,7 @@ export function Cart() {
   const { formatMoney } = useMoney();
   const navigate = useNavigate();
   const { lines, note, setNote, promoCode, setPromoCode, orderType, tableNumber } = useCart();
+  useTableHold();
   const { promotions, settings } = useStore();
   const { totals, promo, promoApplied, prepMinutes } = useCartTotals();
   const [codeInput, setCodeInput] = useState('');
@@ -34,22 +36,22 @@ export function Cart() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-cream pb-12">
+    <div className="customer-bg min-h-screen w-full pb-12">
       <CustomerHeader backTo="/menu" showCart={false} />
-      <main className="mx-auto max-w-6xl px-4 py-8 md:px-6">
-        <h1 className="font-display text-4xl font-black uppercase leading-none tracking-tight md:text-5xl">Your order</h1>
+      <main className="mx-auto max-w-[1500px] px-4 py-8 md:px-8 xl:px-12">
+        <h1 className="text-gradient w-fit font-display text-5xl font-black uppercase leading-none tracking-tight md:text-6xl">Your order</h1>
         <p className="mt-1.5 text-sm text-muted">
           {orderType === 'dine-in' ? `Dine-in · Table ${tableNumber}` : 'Takeaway'}
         </p>
 
         {lines.length === 0 ?
-        <div className="mt-8 rounded-3xl bg-surface ring-1 ring-line">
+        <div className="mt-8 rounded-3xl bg-surface shadow-lg shadow-ink/5 ring-1 ring-line/60">
             <EmptyState
             icon={ShoppingBagIcon}
             title="Your cart is empty"
             body="Burgers, pizza, bowls and more are waiting for you."
             action={
-            <Link to={orderType ? '/menu' : '/'} className="inline-flex h-12 items-center rounded-full bg-brand px-6 font-semibold text-brand-ink">
+            <Link to={orderType ? '/menu' : '/'} className="inline-flex h-12 items-center rounded-full gradient-brand px-6 font-semibold text-white">
                   Browse the menu
                 </Link>
             } />
@@ -58,7 +60,7 @@ export function Cart() {
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start lg:gap-8">
             <div className="space-y-6">
-              <section aria-label="Items" className="rounded-3xl bg-surface px-4 ring-1 ring-line md:px-6">
+              <section aria-label="Items" className="rounded-3xl bg-surface px-4 shadow-lg shadow-ink/5 ring-1 ring-line/60 md:px-6">
                 <div className="divide-y divide-line">
                   {lines.map((l) =>
                 <CartLineItem key={l.lineId} line={l} />
@@ -72,7 +74,7 @@ export function Cart() {
                 </Link>
               </section>
 
-              <section className="rounded-3xl bg-surface p-4 ring-1 ring-line md:p-6">
+              <section className="rounded-3xl bg-surface p-4 shadow-lg shadow-ink/5 ring-1 ring-line/60 md:p-6">
                 <label htmlFor="order-note" className="font-semibold">
                   Note for the kitchen
                 </label>
@@ -90,7 +92,7 @@ export function Cart() {
             </div>
 
             <aside className="space-y-4 lg:sticky lg:top-24">
-              <section className="rounded-3xl bg-surface p-5 ring-1 ring-line md:p-6">
+              <section className="rounded-3xl bg-surface p-5 shadow-lg shadow-ink/5 ring-1 ring-line/60 md:p-6">
                 <h2 className="font-display text-xl font-extrabold uppercase tracking-tight">Summary</h2>
 
                 <div className="mt-4">
@@ -120,7 +122,7 @@ export function Cart() {
                     aria-label="Promo code"
                     className="h-11 min-w-0 flex-1 rounded-full border border-line bg-cream/50 px-4 text-sm uppercase outline-none placeholder:normal-case focus:border-brand" />
                   
-                      <button type="submit" className="h-11 rounded-full bg-ink px-5 text-sm font-semibold text-white">
+                      <button type="submit" className="h-11 rounded-full gradient-night px-5 text-sm font-semibold text-white">
                         Apply
                       </button>
                     </form>
@@ -140,7 +142,7 @@ export function Cart() {
                 type="button"
                 onClick={() => navigate('/checkout')}
                 disabled={!settings.isOpen}
-                className="mt-5 flex h-14 w-full items-center justify-between rounded-full bg-brand px-6 font-semibold text-brand-ink transition-colors duration-150 hover:bg-brand-strong disabled:cursor-not-allowed disabled:bg-line disabled:text-muted">
+                className="mt-5 flex h-14 w-full items-center justify-between rounded-full gradient-brand px-6 font-semibold text-white transition-colors duration-150 hover:brightness-110 disabled:cursor-not-allowed disabled:bg-line disabled:text-muted">
                 
                   <span>{settings.isOpen ? 'Checkout' : 'Ordering paused'}</span>
                   <span className="font-display text-lg font-extrabold">{formatMoney(totals.total)}</span>

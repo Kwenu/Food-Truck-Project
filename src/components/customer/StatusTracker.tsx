@@ -29,7 +29,7 @@ export function StatusTracker({ order }: {order: Order;}) {
             {!last &&
             <span className="absolute left-[17px] top-9 h-[calc(100%-2.25rem)] w-0.5 bg-line" aria-hidden="true">
                 <motion.span
-                className="block w-full bg-brand"
+                className="block w-full gradient-brand"
                 initial={false}
                 animate={{ height: done ? '100%' : '0%' }}
                 transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }} />
@@ -38,14 +38,14 @@ export function StatusTracker({ order }: {order: Order;}) {
             }
             <span
               className={`relative z-10 grid h-9 w-9 shrink-0 place-items-center rounded-full border-2 transition-colors duration-200 ${
-              done ? 'border-brand bg-brand text-brand-ink' : current ? 'border-brand bg-surface text-brand-strong' : 'border-line bg-surface text-muted'}`
+              done ? 'border-brand gradient-brand text-white' : current ? 'border-brand bg-surface text-brand-strong' : 'border-line bg-surface text-muted'}`
               }>
               
               {done ?
               <CheckIcon size={18} strokeWidth={3} /> :
               current ?
               <motion.span
-                className="h-3 w-3 rounded-full bg-brand"
+                className="h-3 w-3 rounded-full gradient-brand"
                 animate={{ scale: [1, 0.7, 1] }}
                 transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }} /> :
 

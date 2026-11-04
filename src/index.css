@@ -65,3 +65,33 @@ body {
     width: 100%;
   }
 }
+
+
+/* ------------------------------------------------------------------ */
+/*  Customer interface look: clean, simple, brand colour + dark ink     */
+/* ------------------------------------------------------------------ */
+.customer-bg {
+  background-color: #fffaf4;
+}
+/* Solid brand colour for main buttons (kept as class names used across the customer screens) */
+.gradient-brand,
+.gradient-fresh {
+  background-color: rgb(var(--brand));
+}
+/* Dark ink for secondary buttons / headers */
+.gradient-night,
+.gradient-cool {
+  background-color: rgb(var(--ink));
+}
+/* Small yellow highlight (badges) */
+.gradient-sun {
+  background-color: rgb(var(--mustard));
+}
+.text-gradient {
+  color: rgb(var(--brand-strong));
+}
+.glass {
+  background-color: rgb(255 255 255 / 0.92);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
