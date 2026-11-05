@@ -180,19 +180,54 @@ export interface TableState {
   mine: boolean;
 }
 
-/** Reserves a table for this device (about 10 minutes, renewed while the customer is browsing). Throws if it is taken. */
+/** True when the database has not been updated with the table-locking SQL yet (function not found). */
+export function isTableLockingMissing(error: {message?: string; code?: string;} | null | undefined): boolean {
+  if (!error) return false;
+  const text = `${error.code ?? ''} ${error.message ?? ''}`;
+  return /PGRST202|schema cache|could not find the function|function public\.(claim_table|release_table|get_table_states)/i.test(text);
+}
+
+let warnedMissingLocking = false;
+function warnLockingMissing() {
+  if (warnedMissingLocking) return;
+  warnedMissingLocking = true;
+  console.error(
+    '[Ember & Wheel] Table locking is OFF: run supabase/schema.sql in the Supabase SQL Editor ' +
+    '(it adds claim_table / release_table / get_table_states), then reload the app.'
+  );
+}
+
+/**
+ * Reserves a table for this device (about 10 minutes, renewed while the customer is browsing).
+ * Throws a readable "occupied" message if the table is taken. If the database has not been updated
+ * yet, ordering keeps working as before (no locking) instead of blocking every customer.
+ */
 export async function claimTableRemote(tableNumber: number, token: string): Promise<void> {
-  ensure((await supabase.rpc('claim_table', { p_number: tableNumber, p_token: token })).error);
+  const { error } = await supabase.rpc('claim_table', { p_number: tableNumber, p_token: token });
+  if (isTableLockingMissing(error)) {
+    warnLockingMissing();
+    return;
+  }
+  ensure(error);
 }
 
 /** Lets go of whatever table this device is holding. */
 export async function releaseTableRemote(token: string): Promise<void> {
-  ensure((await supabase.rpc('release_table', { p_token: token })).error);
+  const { error } = await supabase.rpc('release_table', { p_token: token });
+  if (isTableLockingMissing(error)) {
+    warnLockingMissing();
+    return;
+  }
+  ensure(error);
 }
 
 /** Live availability of every table, from this device's point of view. */
 export async function fetchTableStates(token: string): Promise<TableState[]> {
   const { data, error } = await supabase.rpc('get_table_states', { p_token: token });
+  if (isTableLockingMissing(error)) {
+    warnLockingMissing();
+    return [];
+  }
   ensure(error);
   return Array.isArray(data) ? (data as TableState[]) : [];
 }

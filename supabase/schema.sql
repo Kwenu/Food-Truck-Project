@@ -786,3 +786,9 @@ update public.dining_tables t
 --
 --  After that, sign in at /staff/login and add the rest of your team from
 --  Admin → Staff access.
+
+-- ---------------------------------------------------------------------------
+--  8. Tell Supabase's API to pick up the new functions right away
+--     (without this you can see: "Could not find the function public.claim_table ... in the schema cache")
+-- ---------------------------------------------------------------------------
+notify pgrst, 'reload schema';

@@ -66,7 +66,9 @@ export function DineInSetup() {
       toast.success(`Ordering for Table ${n}`);
       navigate('/menu');
     } catch (e) {
-      const msg = e instanceof Error && e.message ? e.message : `Table ${n} is not available right now.`;
+      const raw = e instanceof Error ? e.message : '';
+      // Only a real "occupied" answer is shown as such; anything else is a connection/setup problem
+      const msg = /occupied/i.test(raw) ? raw : `We couldn’t reserve Table ${n} right now. Please try again.`;
       setError(msg);
       toast.error(msg);
       void loadStates();

@@ -14,11 +14,14 @@ export function TableLanding() {
   const navigate = useNavigate();
   const table = tables.find((t) => t.code === tableCode);
   const [busyMessage, setBusyMessage] = useState<string | null>(null);
+  const [problem, setProblem] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     if (!table) return;
     let cancelled = false;
     setBusyMessage(null);
+    setProblem(null);
     claimTable(table.number).
     then(() => {
       if (cancelled) return;
@@ -27,13 +30,32 @@ export function TableLanding() {
     }).
     catch((e) => {
       if (cancelled) return;
-      setBusyMessage(e instanceof Error && e.message ? e.message : `Table ${table.number} is not available right now.`);
+      const message = e instanceof Error ? e.message : '';
+      if (/occupied/i.test(message)) setBusyMessage(message);else
+      setProblem('We couldn’t reserve your table right now. Please check your connection and try again.');
     });
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [table?.number]);
+  }, [table?.number, attempt]);
+
+  if (table && problem) {
+    return (
+      <main className="customer-bg grid min-h-screen w-full place-items-center px-4">
+        <EmptyState
+          icon={QrCodeIcon}
+          title="Something went wrong"
+          body={problem}
+          action={
+          <button type="button" onClick={() => setAttempt((n) => n + 1)} className="inline-flex h-12 items-center rounded-full gradient-brand px-6 font-semibold text-white shadow-lg shadow-brand/25">
+              Try again
+            </button>
+          } />
+        
+      </main>);
+
+  }
 
   if (table && !busyMessage) {
     return (
